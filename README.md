@@ -10,6 +10,30 @@
 [![Steam Gothic 1](https://img.shields.io/badge/steam-Gothic%201-2a3f5a?logo=steam&labelColor=1b2838)](https://steamcommunity.com/sharedfiles/filedetails/?id=2786959658)
 [![Steam Gothic 2](https://img.shields.io/badge/steam-Gothic%202-2a3f5a?logo=steam&labelColor=1b2838)](https://steamcommunity.com/sharedfiles/filedetails/?id=2786958841)
 
+> [!IMPORTANT]
+> **This fork adds compatibility with The Chronicles of Myrtana: Archolos.**
+> It is unofficial and not maintained by the author of Free Aiming. See [szapp/FreeAiming#5](https://github.com/szapp/FreeAiming/issues/5) and [#4](https://github.com/szapp/FreeAiming/issues/4) for the original reports.
+
+## Archolos compatibility (this fork)
+
+Archolos ships its own, modified LeGo 2.7. Free Aiming needs LeGo, so Ninja parses the Toolkit's LeGo 2.9 on top of it. With the original patch this crashes Archolos: in the achievement checks (every 10 seconds), on fall damage and food or potion buffs, when cooking or using the alchemy table, and when a recipe is shown in the inventory.
+
+[`Ninja/FreeAiming/Content/Archolos.d`](Ninja/FreeAiming/Content/Archolos.d) fixes this. It is called from `Ninja_FreeAiming_Init` and only becomes active when Archolos is detected:
+
+| Problem | Fix |
+| --- | --- |
+| The Toolkit's `LeGo_All` excludes `LeGo_Buffs` and `LeGo_Render`, so Archolos' `LeGo_Init(LeGo_All & ~...)` never sets up the buff display and the item renderer. | Sets both up after `LeGo_MergeFlags`, with handles that belong to the mod (so they are saved with the game). |
+| The buff display of Archolos only shows buffs with `lCBuff.show` and creates icons on demand. | `Bufflist_Init/Add/Remove` follow the Archolos behavior and tolerate missing handles. |
+| The item renderer of LeGo 2.7 works with pointers, the Toolkit's with handles. The Archolos crafting menus use the returned handles as pointers, which corrupts memory (freeze when cooking). | The renderer functions switch back to the pointer-based LeGo 2.7 behavior for Archolos. |
+| The recipe information in the inventory creates a recipe object every frame (out of memory). | Creates it once per recipe and skips invalid data. |
+| Broken hook events crash the hook controller `_Hook` (Archolos' `KmLib.dll` also hooks `oCGame::Render`). | `_Hook` checks events and listeners, skips broken ones with a warning and frees its temporary copy. |
+
+Tested with The Chronicles of Myrtana: Archolos (GOG version, SystemPack 1.8, Ninja with Toolkit) on Linux (Wine): loading and playing, recipes in the inventory, cooking at the stove, bow combat. Buffs from fall damage, food and potions were not tested separately.
+
+**Diagnostics:** Add `archolosDiagnostics=1` to the `[GFA]` section of `Gothic.ini` to write checkpoints and the list of all engine hooks to `FreeAiming_Archolos.log` in the game folder, and to let Ikarus/LeGo messages through to `system/GOTHIC_ERRORLOG.TXT`.
+
+**License:** `Archolos.d` is derived from LeGo and Ikarus (as modified in the Ninja Toolkit) and from the scripts of Archolos, so it is licensed under the [GothicMOD license](LICENSE-GothicMOD.txt) (non-commercial use only). The MIT license of Free Aiming does not apply to it.
+
 Free aiming patch for Gothic, Gothic Sequel, Gothic 2 and Gothic 2 NotR
 
 This is a modular modification (a.k.a. patch or add-on) that can be installed and uninstalled at any time and is virtually compatible with any modification.

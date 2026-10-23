@@ -32,6 +32,12 @@ func void Ninja_FreeAiming_Init() {
     // Wrapper for "LeGo_Init" to ensure correct LeGo initialization without breaking the mod
     LeGo_MergeFlags(GFA_LEGO_FLAGS);
 
+    // Set up what the Toolkit's LeGo omits for The Chronicles of Myrtana: Archolos (see Archolos.d)
+    Patch_GFA_ArcholosFix();
+
     // Initialize GFA
     GFA_Init(GFA_ALL & ~GFA_REUSE_PROJECTILES);
+
+    // Archolos fix: Optional diagnostics (see Archolos.d)
+    Patch_GFA_Archolos_LogHooks();
 };
